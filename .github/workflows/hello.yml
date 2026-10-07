@@ -1,26 +1,30 @@
-name: Hello
+name: CI
 
 on:
-  push:
-    branches: [main]
   pull_request:
+    branches: [main]
+  push:
     branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  greet:
+  check:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out the repository
-        uses: actions/checkout@v7
+      - uses: actions/checkout@v7
 
-      - name: Show where we are
+      - name: Verify the README is not empty
         run: |
-          echo "Repository: $GITHUB_REPOSITORY"
-          echo "Commit:     $GITHUB_SHA"
-          echo "Branch:     $GITHUB_REF_NAME"
-          ls -la
+          if [ ! -s README.md ]; then
+            echo "::error file=README.md::README.md is empty"
+            exit 1
+          fi
+          echo "README.md has $(wc -l < README.md) lines"
 
